@@ -71,41 +71,36 @@ class BaseScene {
         button.interactive = true;
         button.buttonMode = true;
         
-        // Button background
         const background = new PIXI.Graphics();
-        background.beginFill(0x7CFC00); // Light green
+        background.beginFill(0x7CFC00);
         background.drawRoundedRect(0, 0, width, height, 10);
         background.endFill();
         
-        // Button text
         const buttonText = this.createText(text, 20, 0x000000);
         buttonText.anchor.set(0.5);
         buttonText.x = width / 2;
         buttonText.y = height / 2;
         
-        // Add to button container
         button.addChild(background);
         button.addChild(buttonText);
         
-        // Add hover effects
         button.on('pointerover', () => {
-            background.tint = 0x90EE90; // Lighter green
+            background.tint = 0x90EE90;
             button.scale.set(1.05);
         });
         
         button.on('pointerout', () => {
-            background.tint = 0xFFFFFF; // Reset tint
+            background.tint = 0xFFFFFF;
             button.scale.set(1.0);
         });
         
-        // Add click handler
         button.on('pointerdown', () => {
-            background.tint = 0x32CD32; // Darker green
+            background.tint = 0x32CD32;
             button.scale.set(0.95);
         });
         
         button.on('pointerup', () => {
-            background.tint = 0xFFFFFF; // Reset tint
+            background.tint = 0xFFFFFF;
             button.scale.set(1.0);
             onClick();
         });

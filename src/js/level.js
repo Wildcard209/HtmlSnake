@@ -8,17 +8,14 @@ class Level {
      * @param {number} levelIndex - Starting level index (default: 0)
      */
     constructor(levelIndex = 0) {
-        // Initialize level properties
         this.currentLevelIndex = levelIndex;
         this.levelData = LEVELS[levelIndex];
-        this.walls = [...this.levelData.walls]; // Clone the walls array
+        this.walls = [...this.levelData.walls];
         this.requiredScore = this.levelData.requiredScore;
         this.speed = this.levelData.speed;
         
-        // Create graphics container
         this.graphics = new PIXI.Container();
         
-        // Draw the walls
         this.updateGraphics();
     }
     
@@ -95,11 +92,10 @@ class Level {
         if (this.hasNextLevel()) {
             this.currentLevelIndex++;
             this.levelData = LEVELS[this.currentLevelIndex];
-            this.walls = [...this.levelData.walls]; // Clone the walls array
+            this.walls = [...this.levelData.walls];
             this.requiredScore = this.levelData.requiredScore;
             this.speed = this.levelData.speed;
             
-            // Update graphics
             this.updateGraphics();
             
             return true;
@@ -113,11 +109,10 @@ class Level {
     reset() {
         this.currentLevelIndex = 0;
         this.levelData = LEVELS[0];
-        this.walls = [...this.levelData.walls]; // Clone the walls array
+        this.walls = [...this.levelData.walls];
         this.requiredScore = this.levelData.requiredScore;
         this.speed = this.levelData.speed;
         
-        // Update graphics
         this.updateGraphics();
     }
     
@@ -125,28 +120,22 @@ class Level {
      * Update wall graphics
      */
     updateGraphics() {
-        // Clear existing graphics
         this.graphics.removeChildren();
-        
-        // Draw walls
+
         this.walls.forEach(wall => {
             const wallGraphic = new PIXI.Graphics();
             
-            // Draw wall block
             wallGraphic.beginFill(COLORS.WALL);
             wallGraphic.drawRect(0, 0, GRID_SIZE, GRID_SIZE);
             wallGraphic.endFill();
             
-            // Add some texture to walls
             wallGraphic.beginFill(0x000000, 0.2);
             wallGraphic.drawRect(2, 2, GRID_SIZE - 4, GRID_SIZE - 4);
             wallGraphic.endFill();
             
-            // Position wall
             wallGraphic.x = wall.x * GRID_SIZE;
             wallGraphic.y = wall.y * GRID_SIZE;
             
-            // Add to container
             this.graphics.addChild(wallGraphic);
         });
     }
@@ -158,10 +147,8 @@ class Level {
     drawGrid(graphics) {
         graphics.clear();
         
-        // Draw checkerboard pattern
         for (let x = 0; x < GRID_WIDTH; x++) {
             for (let y = 0; y < GRID_HEIGHT; y++) {
-                // Alternate colors
                 const color = (x + y) % 2 === 0 ? COLORS.GRID_BG_1 : COLORS.GRID_BG_2;
                 
                 graphics.beginFill(color);
