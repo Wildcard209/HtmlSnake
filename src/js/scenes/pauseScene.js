@@ -115,6 +115,17 @@ class PauseScene extends BaseScene {
     onEnter() {
         console.log("Pause menu entered");
         
+        // Make sure any current music continues playing - we don't want to stop it on pause
+        try {
+            // Store the current music state so we can restore it if needed
+            if (this.game.audio && this.game.audio.currentMusic) {
+                console.log("Preserving current music during pause");
+                // No need to call playMusic as we want existing music to continue
+            }
+        } catch (error) {
+            console.error("Error handling music in pause scene:", error);
+        }
+        
         this.positionElements();
         
         console.log("Menu container position:", this.menuContainer.x, this.menuContainer.y);

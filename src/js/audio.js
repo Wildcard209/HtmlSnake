@@ -24,14 +24,69 @@ class AudioManager {
         this.currentMusic = null;
         
         this.audioLoadFailed = false;
+        this.audioInitialized = false;
         
-        try {
-            this.loadAudio();
-            console.log("Audio loaded successfully");
-        } catch (error) {
-            console.error("Error loading audio:", error);
-            this.audioLoadFailed = true;
+        // Create initial dummy objects to handle immediate requests
+        this._createDummyAudioSystem();
+        
+        // Initialize immediately to ensure menu music can play
+        this.loadAudio();
+        console.log("Initial audio loading completed");
+        
+        // Initialize with a delay to ensure assets are properly preloaded for in-game sounds
+        this.initTimeout = setTimeout(() => {
+            try {
+                this.loadAudio();
+                console.log("Audio loaded successfully");
+                this.audioInitialized = true;
+                
+                // Try to play menu music again if we're in the menu scene
+                if (this.currentMusic && this.currentMusic === this.music.menu) {
+                    console.log("Replaying menu music after full initialization");
+                    this.playMusic('menu');
+                }
+            } catch (error) {
+                console.error("Error loading audio:", error);
+                this.audioLoadFailed = true;
+                this._createDummyAudioSystem();
+            }
+        }, 800); // Increased delay to ensure assets are loaded
+        
+        // Safety timeout - if audio hasn't initialized after 5 seconds, create dummy system
+        this.safetyTimeout = setTimeout(() => {
+            if (!this.audioInitialized) {
+                console.warn("Audio initialization timed out after 5 seconds, creating fallback system");
+                this.audioLoadFailed = true;
+                clearTimeout(this.initTimeout);
+                this._createDummyAudioSystem();
+            }
+        }, 5000);
+    }
+    
+    /**
+     * Create a complete dummy audio system if loading fails
+     * @private
+     */
+    _createDummyAudioSystem() {
+        console.log("Creating dummy audio system");
+        
+        // Create dummy sound objects
+        for (const soundName in this.sounds) {
+            this.sounds[soundName] = {
+                play: () => { return 0; },
+                stop: () => {},
+                volume: () => {},
+                playing: () => false
+            };
         }
+        
+        // Create dummy music objects
+        for (const musicName in this.music) {
+            this._createDummyMusic(musicName);
+        }
+        
+        // Set as initialized
+        this.audioInitialized = true;
     }
     
     /**
@@ -39,37 +94,21 @@ class AudioManager {
      */
     loadAudio() {
         try {
-            this.sounds.eat = new Howl({
-                src: [ASSETS.SOUNDS.EAT],
-                volume: this.soundVolume
-            });
+            console.log("Loading sound effects...");
             
-            this.sounds.gameOver = new Howl({
-                src: [ASSETS.SOUNDS.GAME_OVER],
-                volume: this.soundVolume
-            });
+            // Load each sound with error handling
+            this._loadSound('eat', ASSETS.SOUNDS.EAT);
+            this._loadSound('gameOver', ASSETS.SOUNDS.GAME_OVER);
+            this._loadSound('levelUp', ASSETS.SOUNDS.LEVEL_UP);
+            this._loadSound('grow', ASSETS.SOUNDS.GROW);
             
-            this.sounds.levelUp = new Howl({
-                src: [ASSETS.SOUNDS.LEVEL_UP],
-                volume: this.soundVolume
-            });
+            console.log("Loading music...");
             
-            this.sounds.grow = new Howl({
-                src: [ASSETS.SOUNDS.GROW],
-                volume: this.soundVolume
-            });
+            // Load each music track with error handling
+            this._loadMusic('menu', ASSETS.MUSIC.MENU);
+            this._loadMusic('game', ASSETS.MUSIC.GAME);
             
-            this.music.menu = new Howl({
-                src: [ASSETS.MUSIC.MENU],
-                volume: this.musicVolume,
-                loop: true
-            });
-            
-            this.music.game = new Howl({
-                src: [ASSETS.MUSIC.GAME],
-                volume: this.musicVolume,
-                loop: true
-            });
+            console.log("Audio loading complete");
         } catch (error) {
             console.error("Error in loadAudio:", error);
             this.audioLoadFailed = true;
@@ -77,16 +116,111 @@ class AudioManager {
     }
     
     /**
+     * Load a single sound with error handling
+     * @private
+     */
+    _loadSound(name, path) {
+        try {
+            console.log(`Loading sound: ${name} from ${path}`);
+            this.sounds[name] = new Howl({
+                src: [path],
+                volume: this.soundVolume,
+                html5: true,
+                onload: () => console.log(`Sound loaded: ${name}`),
+                onloaderror: (id, err) => {
+                    console.error(`Error loading sound ${name}:`, err);
+                    // Create a dummy sound that does nothing
+                    this.sounds[name] = {
+                        play: () => {},
+                        stop: () => {},
+                        volume: () => {}
+                    };
+                }
+            });
+        } catch (error) {
+            console.error(`Error creating Howl for ${name}:`, error);
+            // Create a dummy sound that does nothing
+            this.sounds[name] = {
+                play: () => {},
+                stop: () => {},
+                volume: () => {}
+            };
+        }
+    }
+    
+    /**
+     * Load a single music track with error handling
+     * @private
+     */
+    _loadMusic(name, path) {
+        try {
+            console.log(`Loading music: ${name} from ${path}`);
+            
+            // Create a timeout to detect hanging loads
+            let loadTimeout = setTimeout(() => {
+                console.error(`Timeout loading music ${name}. Creating dummy object.`);
+                // Create a dummy music object if loading takes too long
+                this._createDummyMusic(name);
+            }, 5000); // 5 second timeout
+            
+            this.music[name] = new Howl({
+                src: [path],
+                volume: this.musicVolume,
+                loop: true,
+                html5: true, // Force HTML5 Audio for larger music files
+                preload: true,
+                onload: () => {
+                    console.log(`Music loaded successfully: ${name}`);
+                    clearTimeout(loadTimeout);
+                },
+                onloaderror: (id, err) => {
+                    console.error(`Error loading music ${name}:`, err);
+                    clearTimeout(loadTimeout);
+                    // Create a dummy music object that does nothing
+                    this._createDummyMusic(name);
+                }
+            });
+        } catch (error) {
+            console.error(`Error creating Howl for ${name}:`, error);
+            // Create a dummy music object that does nothing
+            this._createDummyMusic(name);
+        }
+    }
+    
+    /**
+     * Create a dummy music object that does nothing
+     * @private
+     */
+    _createDummyMusic(name) {
+        console.log(`Creating dummy music for: ${name}`);
+        this.music[name] = {
+            play: () => { return 0; }, // Return a dummy ID
+            stop: () => {},
+            pause: () => {},
+            volume: () => {},
+            loop: () => {},
+            state: () => 'unloaded',
+            playing: () => false
+        };
+    }
+    
+    /**
      * Play a sound effect
      * @param {string} soundName - The name of the sound effect to play
      */
     playSound(soundName) {
+        if (this.audioLoadFailed) {
+            console.warn("Audio system is disabled due to loading failures");
+            return;
+        }
+        
         try {
             if (this.soundEnabled && this.sounds[soundName]) {
+                console.log(`Playing sound: ${soundName}`);
                 this.sounds[soundName].play();
             }
         } catch (error) {
-            console.error("Error playing sound:", error);
+            console.error(`Error playing sound ${soundName}:`, error);
         }
     }
     
@@ -95,17 +229,61 @@ class AudioManager {
      * @param {string} musicName - The name of the music track to play
      */
     playMusic(musicName) {
+        if (this.audioLoadFailed) {
+            console.warn("Audio system is disabled due to loading failures");
+            return;
+        }
+        
         try {
+            console.log(`Attempting to play music: ${musicName}`);
+            
+            // Stop current music if any
             if (this.currentMusic) {
-                this.currentMusic.stop();
+                try {
+                    this.currentMusic.stop();
+                } catch (error) {
+                    console.error("Error stopping current music:", error);
+                }
             }
             
+            // Check if music exists and is enabled
             if (this.musicEnabled && this.music[musicName]) {
+                console.log(`Starting music: ${musicName}`);
                 this.currentMusic = this.music[musicName];
-                this.currentMusic.play();
+                
+                try {
+                    // Protect against potential errors with a fallback
+                    if (typeof this.currentMusic.play !== 'function') {
+                        console.error(`Music ${musicName} play function not available. Creating dummy.`);
+                        this._createDummyMusic(musicName);
+                        this.currentMusic = this.music[musicName];
+                    }
+                    
+                    const id = this.currentMusic.play();
+                    console.log(`Music playing with id: ${id}`);
+                    
+                    // Verify that the music is actually playing
+                    setTimeout(() => {
+                        try {
+                            if (this.currentMusic && typeof this.currentMusic.playing === 'function' && !this.currentMusic.playing()) {
+                                console.warn(`Music ${musicName} failed to play properly. Attempting fallback.`);
+                                // Try one more time with a clean instance
+                                this._createDummyMusic(musicName);
+                                this.currentMusic = this.music[musicName];
+                            }
+                        } catch (e) {
+                            console.error("Error checking if music is playing:", e);
+                        }
+                    }, 1000);
+                } catch (error) {
+                    console.error(`Error playing ${musicName}:`, error);
+                    // Create a dummy on error to prevent future crashes
+                    this._createDummyMusic(musicName);
+                    this.currentMusic = this.music[musicName];
+                }
             }
         } catch (error) {
-            console.error("Error playing music:", error);
+            console.error(`Error in playMusic for ${musicName}:`, error);
         }
     }
     
@@ -113,6 +291,10 @@ class AudioManager {
      * Stop all music
      */
     stopMusic() {
+        if (this.audioLoadFailed) {
+            return;
+        }
+        
         try {
             if (this.currentMusic) {
                 this.currentMusic.stop();

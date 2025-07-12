@@ -4,29 +4,89 @@
  */
 class Game {
     constructor() {
-        this.app = new PIXI.Application({
-            width: GRID_WIDTH * GRID_SIZE,
-            height: GRID_HEIGHT * GRID_SIZE,
-            backgroundColor: COLORS.GRID_BG_1,
-            resolution: window.devicePixelRatio || 1,
-            autoDensity: true
-        });
+        try {
+            this.app = new PIXI.Application({
+                width: GRID_WIDTH * GRID_SIZE,
+                height: GRID_HEIGHT * GRID_SIZE,
+                backgroundColor: COLORS.GRID_BG_1,
+                resolution: window.devicePixelRatio || 1,
+                autoDensity: true
+            });
+            
+            document.getElementById('game-container').appendChild(this.app.view);
+            
+            this.currentScene = null;
+            this.scenes = {};
+            this.isPaused = false;
+            this.score = 0;
+            this.level = 1;
+            
+            // Initialize input handler first
+            this.input = new InputHandler();
+            
+            // Initialize audio with error handling first
+            try {
+                console.log("Initializing audio manager");
+                this.audio = new AudioManager();
+            } catch (audioError) {
+                console.error("Failed to initialize audio:", audioError);
+                // Create a dummy audio manager that does nothing
+                this.audio = this._createDummyAudioManager();
+            }
+            
+            // Create scenes after audio to ensure audio is ready
+            this.createScenes();
+            
+            this.resize();
+        } catch (error) {
+            console.error("Critical error during game initialization:", error);
+            this._showErrorMessage("Failed to initialize game. Please refresh the page.");
+        }
+    }
+    
+    /**
+     * Create a dummy audio manager to prevent crashes if audio fails
+     * @private
+     */
+    _createDummyAudioManager() {
+        console.log("Using dummy audio manager as fallback");
+        return {
+            sounds: {},
+            music: {},
+            soundEnabled: false,
+            musicEnabled: false,
+            audioLoadFailed: true,
+            playSound: () => {},
+            playMusic: () => {},
+            stopMusic: () => {},
+            toggleSound: () => {},
+            toggleMusic: () => {},
+            setSoundVolume: () => {},
+            setMusicVolume: () => {}
+        };
+    }
+    
+    /**
+     * Show an error message to the user
+     * @private
+     */
+    _showErrorMessage(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.position = 'absolute';
+        errorDiv.style.top = '50%';
+        errorDiv.style.left = '50%';
+        errorDiv.style.transform = 'translate(-50%, -50%)';
+        errorDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        errorDiv.style.color = '#FF0000';
+        errorDiv.style.padding = '20px';
+        errorDiv.style.borderRadius = '10px';
+        errorDiv.style.fontFamily = 'Arial, sans-serif';
+        errorDiv.style.fontSize = '18px';
+        errorDiv.style.textAlign = 'center';
+        errorDiv.style.zIndex = '1000';
+        errorDiv.innerHTML = message;
         
-        document.getElementById('game-container').appendChild(this.app.view);
-        
-        this.currentScene = null;
-        this.scenes = {};
-        this.isPaused = false;
-        this.score = 0;
-        this.level = 1;
-        
-        this.createScenes();
-        
-        this.input = new InputHandler();
-        
-        this.audio = new AudioManager();
-        
-        this.resize();
+        document.body.appendChild(errorDiv);
     }
     
     /**

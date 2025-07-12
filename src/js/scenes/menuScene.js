@@ -168,11 +168,19 @@ class MenuScene extends BaseScene {
      * Called when scene becomes active
      */
     onEnter() {
-        try {
-            this.game.audio.playMusic('menu');
-        } catch (error) {
-            console.error("Error playing menu music:", error);
-        }
+        // Play menu music with a delay to ensure audio is initialized
+        setTimeout(() => {
+            try {
+                console.log("Attempting to play menu music");
+                if (this.game && this.game.audio) {
+                    this.game.audio.playMusic('menu');
+                } else {
+                    console.warn("Audio not yet available");
+                }
+            } catch (error) {
+                console.error("Error playing menu music:", error);
+            }
+        }, 1000); // Give the audio system time to initialize
         
         this.animationTime = 0;
         

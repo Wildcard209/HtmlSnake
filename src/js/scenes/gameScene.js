@@ -285,9 +285,17 @@ class GameScene extends BaseScene {
         this.spawnFood();
         
         try {
-            this.game.audio.playMusic('game');
+            console.log("Attempting to play game music");
+            // Use a short timeout to give audio system time to initialize if needed
+            setTimeout(() => {
+                try {
+                    this.game.audio.playMusic('game');
+                } catch (error) {
+                    console.error("Error playing delayed game music:", error);
+                }
+            }, 100);
         } catch (error) {
-            console.error("Error playing game music:", error);
+            console.error("Error setting up game music:", error);
         }
         
         window.addEventListener('keydown', this.keyHandler);
