@@ -3,10 +3,11 @@ const GRID_WIDTH = 40;
 const GRID_HEIGHT = 30;
 
 const GAME_SPEEDS = {
-    SLOW: 150,
-    NORMAL: 100,
-    FAST: 75,
-    VERY_FAST: 50
+    VERY_SLOW: 250,
+    SLOW: 200,
+    NORMAL: 150,
+    FAST: 100,
+    VERY_FAST: 75
 };
 
 const DIRECTIONS = {
@@ -37,14 +38,14 @@ const LEVELS = [
     {
         id: 1,
         name: "Beginner",
-        speed: GAME_SPEEDS.NORMAL,
+        speed: GAME_SPEEDS.VERY_SLOW,
         requiredScore: 10,
         walls: [] // No walls in level 1
     },
     {
         id: 2,
         name: "Novice",
-        speed: GAME_SPEEDS.NORMAL,
+        speed: GAME_SPEEDS.SLOW,
         requiredScore: 15,
         walls: [
             // Simple wall pattern
@@ -55,7 +56,7 @@ const LEVELS = [
     {
         id: 3,
         name: "Intermediate",
-        speed: GAME_SPEEDS.FAST,
+        speed: GAME_SPEEDS.NORMAL,
         requiredScore: 20,
         walls: [
             // More complex wall pattern
@@ -68,7 +69,7 @@ const LEVELS = [
     {
         id: 4,
         name: "Advanced",
-        speed: GAME_SPEEDS.FAST,
+        speed: GAME_SPEEDS.NORMAL,
         requiredScore: 25,
         walls: [
             // Cross pattern
@@ -79,7 +80,7 @@ const LEVELS = [
     {
         id: 5,
         name: "Expert",
-        speed: GAME_SPEEDS.VERY_FAST,
+        speed: GAME_SPEEDS.FAST,
         requiredScore: 30,
         walls: [
             // Maze-like pattern

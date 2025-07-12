@@ -172,35 +172,65 @@ class GameScene extends BaseScene {
      * Advance to the next level
      */
     advanceLevel() {
-        this.game.audio.playSound('levelUp');
+        try {
+            this.game.audio.playSound('levelUp');
+            
+            this.level.advanceLevel();
+            
+            this.levelText.text = `Level: ${this.level.getLevelNumber()}`;
+            
+            this.gameSpeed = this.level.getSpeed();
+            
+            this.progressBar.clear();
+            this.progressBar.beginFill(0x7CFC00);
+            this.progressBar.drawRect(0, 0, 0, 15);
+            this.progressBar.endFill();
+            
+            const levelUpText = this.createText(`Level ${this.level.getLevelNumber()}!`, 48, 0xFFFF00);
+            levelUpText.anchor.set(0.5);
+            levelUpText.x = this.game.app.screen.width / 2;
+            levelUpText.y = this.game.app.screen.height / 2;
+            levelUpText.alpha = 0;
+            this.container.addChild(levelUpText);
+            
+            try {
+                if (typeof gsap !== 'undefined') {
+                    gsap.to(levelUpText, {
+                        alpha: 1,
+                        duration: 0.5,
+                        yoyo: true,
+                        repeat: 1,
+                        onComplete: () => {
+                            this.container.removeChild(levelUpText);
+                        }
+                    });
+                } else {
+                    this._animateLevelUpWithoutGSAP(levelUpText);
+                }
+            } catch (error) {
+                console.error("Error animating level up:", error);
+                this._animateLevelUpWithoutGSAP(levelUpText);
+            }
+        } catch (error) {
+            console.error("Error advancing level:", error);
+        }
+    }
+    
+    /**
+     * Fallback animation for level up text without GSAP
+     * @param {PIXI.Text} levelUpText - The text object to animate
+     * @private
+     */
+    _animateLevelUpWithoutGSAP(levelUpText) {
+        console.log("Using fallback animation for level up");
         
-        this.level.advanceLevel();
+        levelUpText.alpha = 1;
         
-        this.levelText.text = `Level: ${this.level.getLevelNumber()}`;
-        
-        this.gameSpeed = this.level.getSpeed();
-        
-        this.progressBar.clear();
-        this.progressBar.beginFill(0x7CFC00);
-        this.progressBar.drawRect(0, 0, 0, 15);
-        this.progressBar.endFill();
-        
-        const levelUpText = this.createText(`Level ${this.level.getLevelNumber()}!`, 48, 0xFFFF00);
-        levelUpText.anchor.set(0.5);
-        levelUpText.x = this.game.app.screen.width / 2;
-        levelUpText.y = this.game.app.screen.height / 2;
-        levelUpText.alpha = 0;
-        this.container.addChild(levelUpText);
-        
-        gsap.to(levelUpText, {
-            alpha: 1,
-            duration: 0.5,
-            yoyo: true,
-            repeat: 1,
-            onComplete: () => {
+        setTimeout(() => {
+            if (levelUpText.parent) {
                 this.container.removeChild(levelUpText);
             }
-        });
+        }, 2000);
     }
     
     /**
@@ -292,19 +322,53 @@ class GameScene extends BaseScene {
             this._updateCount++;
         }
         
-        // Handle movement input
-        if (this.game.input.isUpPressed()) {
-            console.log("UP pressed in game");
-            this.snake.setDirection(DIRECTIONS.UP);
-        } else if (this.game.input.isDownPressed()) {
-            console.log("DOWN pressed in game");
-            this.snake.setDirection(DIRECTIONS.DOWN);
-        } else if (this.game.input.isLeftPressed()) {
-            console.log("LEFT pressed in game");
-            this.snake.setDirection(DIRECTIONS.LEFT);
-        } else if (this.game.input.isRightPressed()) {
-            console.log("RIGHT pressed in game");
-            this.snake.setDirection(DIRECTIONS.RIGHT);
+        const keyHandlerWorking = this.game.input.isUpPressed() || 
+                                  this.game.input.isDownPressed() || 
+                                  this.game.input.isLeftPressed() || 
+                                  this.game.input.isRightPressed();
+        
+        if (!keyHandlerWorking) {
+            console.log("Using direct key handler as backup");
+            if (this.game && this.game.input && this.game.input.keysHeld) {
+                if (this.game.input.keysHeld['ArrowUp'] || 
+                    this.game.input.keysHeld['w'] || 
+                    this.game.input.keysHeld['W']) {
+                    console.log("Direct UP detected");
+                    this.snake.setDirection(DIRECTIONS.UP);
+                }
+                else if (this.game.input.keysHeld['ArrowDown'] || 
+                         this.game.input.keysHeld['s'] || 
+                         this.game.input.keysHeld['S']) {
+                    console.log("Direct DOWN detected");
+                    this.snake.setDirection(DIRECTIONS.DOWN);
+                }
+                else if (this.game.input.keysHeld['ArrowLeft'] || 
+                         this.game.input.keysHeld['a'] || 
+                         this.game.input.keysHeld['A']) {
+                    console.log("Direct LEFT detected");
+                    this.snake.setDirection(DIRECTIONS.LEFT);
+                }
+                else if (this.game.input.keysHeld['ArrowRight'] || 
+                         this.game.input.keysHeld['d'] || 
+                         this.game.input.keysHeld['D']) {
+                    console.log("Direct RIGHT detected");
+                    this.snake.setDirection(DIRECTIONS.RIGHT);
+                }
+            }
+        } else {
+            if (this.game.input.isUpPressed()) {
+                console.log("UP pressed in game");
+                this.snake.setDirection(DIRECTIONS.UP);
+            } else if (this.game.input.isDownPressed()) {
+                console.log("DOWN pressed in game");
+                this.snake.setDirection(DIRECTIONS.DOWN);
+            } else if (this.game.input.isLeftPressed()) {
+                console.log("LEFT pressed in game");
+                this.snake.setDirection(DIRECTIONS.LEFT);
+            } else if (this.game.input.isRightPressed()) {
+                console.log("RIGHT pressed in game");
+                this.snake.setDirection(DIRECTIONS.RIGHT);
+            }
         }
         
         if (this.game.input.isPausePressed()) {
