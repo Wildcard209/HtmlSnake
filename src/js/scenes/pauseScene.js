@@ -23,25 +23,43 @@ class PauseScene extends BaseScene {
         this.menuContainer = new PIXI.Container();
         this.container.addChild(this.menuContainer);
         
+        this.menuPanel = new PIXI.Graphics();
+        this.menuContainer.addChild(this.menuPanel);
+        
         this.title = this.createText("Game Paused", 48, 0xFFFFFF);
         this.title.anchor.set(0.5, 0);
         this.menuContainer.addChild(this.title);
         
+        this.buttonsContainer = new PIXI.Container();
+        this.menuContainer.addChild(this.buttonsContainer);
+        
         this.resumeButton = this.createButton("Resume", () => {
+            console.log("Resume clicked");
             this.game.resume();
         }, 220, 60);
-        this.menuContainer.addChild(this.resumeButton);
+        this.buttonsContainer.addChild(this.resumeButton);
         
         this.restartButton = this.createButton("Restart", () => {
+            console.log("Restart clicked");
             this.game.reset();
             this.game.switchScene('game');
         }, 220, 60);
-        this.menuContainer.addChild(this.restartButton);
+        this.buttonsContainer.addChild(this.restartButton);
         
         this.quitButton = this.createButton("Quit to Menu", () => {
+            console.log("Quit clicked");
             this.game.switchScene('menu');
         }, 220, 60);
-        this.menuContainer.addChild(this.quitButton);
+        this.buttonsContainer.addChild(this.quitButton);
+        
+        this.keyHandler = (e) => {
+            console.log("Pause scene key pressed:", e.key);
+            
+            if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+                console.log("Resume from keyboard");
+                this.game.resume();
+            }
+        };
         
         this.positionElements();
     }
@@ -61,11 +79,25 @@ class PauseScene extends BaseScene {
         this.menuContainer.x = appWidth / 2;
         this.menuContainer.y = appHeight * 0.15;
         
+        this.menuPanel.clear();
+        this.menuPanel.beginFill(0x333333, 0.9);
+        this.menuPanel.lineStyle(3, 0x7CFC00);
+        
+        const buttonWidth = 220;
+        const panelWidth = buttonWidth + 60;
+        const panelHeight = 300;
+        
+        this.menuPanel.drawRoundedRect(-panelWidth/2, -20, panelWidth, panelHeight, 15);
+        this.menuPanel.endFill();
+        
         this.title.x = 0;
-        this.title.y = 0;
+        this.title.y = 10;
         
         const buttonSpacing = 20;
-        const startY = this.title.y + this.title.height + 50;
+        const startY = this.title.y + this.title.height + 30;
+        
+        this.buttonsContainer.x = 0;
+        this.buttonsContainer.y = 0;
         
         this.resumeButton.x = -this.resumeButton.width / 2;
         this.resumeButton.y = startY;
@@ -81,22 +113,58 @@ class PauseScene extends BaseScene {
      * Called when scene becomes active
      */
     onEnter() {
+        console.log("Pause menu entered");
+        
+        this.positionElements();
+        
+        console.log("Menu container position:", this.menuContainer.x, this.menuContainer.y);
+        console.log("Resume button position:", this.resumeButton.x, this.resumeButton.y);
+        console.log("Menu container visible:", this.menuContainer.visible);
+        console.log("Menu container alpha:", this.menuContainer.alpha);
+        
+        this.container.visible = true;
+        this.menuContainer.visible = true;
+        this.resumeButton.visible = true;
+        this.restartButton.visible = true;
+        this.quitButton.visible = true;
+        
+        window.addEventListener('keydown', this.keyHandler);
+        
         this.menuContainer.alpha = 0;
         this.menuContainer.scale.set(0.8);
         
-        gsap.to(this.menuContainer, {
-            alpha: 1,
-            scale: 1,
-            duration: 0.3,
-            ease: "back.out"
-        });
+        try {
+            if (typeof gsap !== 'undefined') {
+                gsap.to(this.menuContainer, {
+                    alpha: 1,
+                    scale: 1,
+                    duration: 0.3,
+                    ease: "back.out"
+                });
+            } else {
+                this._animateMenuWithoutGSAP();
+            }
+        } catch (error) {
+            console.error("Animation error:", error);
+            this._animateMenuWithoutGSAP();
+        }
+    }
+    
+    /**
+     * Fallback animation method when GSAP is not available
+     * @private
+     */
+    _animateMenuWithoutGSAP() {
+        this.menuContainer.alpha = 1;
+        this.menuContainer.scale.set(1);
+        console.log("Using fallback animation for pause menu");
     }
     
     /**
      * Called when scene becomes inactive
      */
     onExit() {
-        // No specific actions needed
+        window.removeEventListener('keydown', this.keyHandler);
     }
     
     /**
@@ -104,7 +172,17 @@ class PauseScene extends BaseScene {
      * @param {number} delta - Time elapsed since last update
      */
     update(delta) {
+        if (this._updateCount === undefined) {
+            this._updateCount = 0;
+        }
+        
+        if (this._updateCount < 5) {
+            console.log("Updating pause scene, count:", this._updateCount);
+            this._updateCount++;
+        }
+        
         if (this.game.input.isPausePressed()) {
+            console.log("Pause pressed in pause menu");
             this.game.resume();
         }
     }

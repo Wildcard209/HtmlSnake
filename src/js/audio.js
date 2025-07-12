@@ -23,44 +23,57 @@ class AudioManager {
         
         this.currentMusic = null;
         
-        this.loadAudio();
+        this.audioLoadFailed = false;
+        
+        try {
+            this.loadAudio();
+            console.log("Audio loaded successfully");
+        } catch (error) {
+            console.error("Error loading audio:", error);
+            this.audioLoadFailed = true;
+        }
     }
     
     /**
      * Load all audio files
      */
     loadAudio() {
-        this.sounds.eat = new Howl({
-            src: [ASSETS.SOUNDS.EAT],
-            volume: this.soundVolume
-        });
-        
-        this.sounds.gameOver = new Howl({
-            src: [ASSETS.SOUNDS.GAME_OVER],
-            volume: this.soundVolume
-        });
-        
-        this.sounds.levelUp = new Howl({
-            src: [ASSETS.SOUNDS.LEVEL_UP],
-            volume: this.soundVolume
-        });
-        
-        this.sounds.grow = new Howl({
-            src: [ASSETS.SOUNDS.GROW],
-            volume: this.soundVolume
-        });
-        
-        this.music.menu = new Howl({
-            src: [ASSETS.MUSIC.MENU],
-            volume: this.musicVolume,
-            loop: true
-        });
-        
-        this.music.game = new Howl({
-            src: [ASSETS.MUSIC.GAME],
-            volume: this.musicVolume,
-            loop: true
-        });
+        try {
+            this.sounds.eat = new Howl({
+                src: [ASSETS.SOUNDS.EAT],
+                volume: this.soundVolume
+            });
+            
+            this.sounds.gameOver = new Howl({
+                src: [ASSETS.SOUNDS.GAME_OVER],
+                volume: this.soundVolume
+            });
+            
+            this.sounds.levelUp = new Howl({
+                src: [ASSETS.SOUNDS.LEVEL_UP],
+                volume: this.soundVolume
+            });
+            
+            this.sounds.grow = new Howl({
+                src: [ASSETS.SOUNDS.GROW],
+                volume: this.soundVolume
+            });
+            
+            this.music.menu = new Howl({
+                src: [ASSETS.MUSIC.MENU],
+                volume: this.musicVolume,
+                loop: true
+            });
+            
+            this.music.game = new Howl({
+                src: [ASSETS.MUSIC.GAME],
+                volume: this.musicVolume,
+                loop: true
+            });
+        } catch (error) {
+            console.error("Error in loadAudio:", error);
+            this.audioLoadFailed = true;
+        }
     }
     
     /**
@@ -68,8 +81,12 @@ class AudioManager {
      * @param {string} soundName - The name of the sound effect to play
      */
     playSound(soundName) {
-        if (this.soundEnabled && this.sounds[soundName]) {
-            this.sounds[soundName].play();
+        try {
+            if (this.soundEnabled && this.sounds[soundName]) {
+                this.sounds[soundName].play();
+            }
+        } catch (error) {
+            console.error("Error playing sound:", error);
         }
     }
     
@@ -78,13 +95,17 @@ class AudioManager {
      * @param {string} musicName - The name of the music track to play
      */
     playMusic(musicName) {
-        if (this.currentMusic) {
-            this.currentMusic.stop();
-        }
-        
-        if (this.musicEnabled && this.music[musicName]) {
-            this.currentMusic = this.music[musicName];
-            this.currentMusic.play();
+        try {
+            if (this.currentMusic) {
+                this.currentMusic.stop();
+            }
+            
+            if (this.musicEnabled && this.music[musicName]) {
+                this.currentMusic = this.music[musicName];
+                this.currentMusic.play();
+            }
+        } catch (error) {
+            console.error("Error playing music:", error);
         }
     }
     
@@ -92,9 +113,13 @@ class AudioManager {
      * Stop all music
      */
     stopMusic() {
-        if (this.currentMusic) {
-            this.currentMusic.stop();
-            this.currentMusic = null;
+        try {
+            if (this.currentMusic) {
+                this.currentMusic.stop();
+                this.currentMusic = null;
+            }
+        } catch (error) {
+            console.error("Error stopping music:", error);
         }
     }
     
@@ -111,14 +136,18 @@ class AudioManager {
     toggleMusic() {
         this.musicEnabled = !this.musicEnabled;
         
-        if (this.musicEnabled) {
-            if (this.currentMusic) {
-                this.currentMusic.play();
+        try {
+            if (this.musicEnabled) {
+                if (this.currentMusic) {
+                    this.currentMusic.play();
+                }
+            } else {
+                if (this.currentMusic) {
+                    this.currentMusic.pause();
+                }
             }
-        } else {
-            if (this.currentMusic) {
-                this.currentMusic.pause();
-            }
+        } catch (error) {
+            console.error("Error toggling music:", error);
         }
     }
     
@@ -129,10 +158,14 @@ class AudioManager {
     setSoundVolume(volume) {
         this.soundVolume = Math.max(0, Math.min(1, volume));
         
-        for (const soundName in this.sounds) {
-            if (this.sounds[soundName]) {
-                this.sounds[soundName].volume(this.soundVolume);
+        try {
+            for (const soundName in this.sounds) {
+                if (this.sounds[soundName]) {
+                    this.sounds[soundName].volume(this.soundVolume);
+                }
             }
+        } catch (error) {
+            console.error("Error setting sound volume:", error);
         }
     }
     
@@ -143,10 +176,14 @@ class AudioManager {
     setMusicVolume(volume) {
         this.musicVolume = Math.max(0, Math.min(1, volume));
         
-        for (const musicName in this.music) {
-            if (this.music[musicName]) {
-                this.music[musicName].volume(this.musicVolume);
+        try {
+            for (const musicName in this.music) {
+                if (this.music[musicName]) {
+                    this.music[musicName].volume(this.musicVolume);
+                }
             }
+        } catch (error) {
+            console.error("Error setting music volume:", error);
         }
     }
 }

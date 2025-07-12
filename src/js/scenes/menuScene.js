@@ -168,7 +168,11 @@ class MenuScene extends BaseScene {
      * Called when scene becomes active
      */
     onEnter() {
-        this.game.audio.playMusic('menu');
+        try {
+            this.game.audio.playMusic('menu');
+        } catch (error) {
+            console.error("Error playing menu music:", error);
+        }
         
         this.animationTime = 0;
         
@@ -178,18 +182,37 @@ class MenuScene extends BaseScene {
         this.titleContainer.y += 50;
         this.buttonsContainer.alpha = 0;
         
-        gsap.to(this.titleContainer, {
-            alpha: 1,
-            y: this.game.app.screen.height * 0.25,
-            duration: 0.8,
-            ease: "back.out"
-        });
-        
-        gsap.to(this.buttonsContainer, {
-            alpha: 1,
-            duration: 0.5,
-            delay: 0.4
-        });
+        try {
+            if (typeof gsap !== 'undefined') {
+                gsap.to(this.titleContainer, {
+                    alpha: 1,
+                    y: this.game.app.screen.height * 0.25,
+                    duration: 0.8,
+                    ease: "back.out"
+                });
+                
+                gsap.to(this.buttonsContainer, {
+                    alpha: 1,
+                    duration: 0.5,
+                    delay: 0.4
+                });
+            } else {
+                this._animateWithoutGSAP();
+            }
+        } catch (error) {
+            console.error("Menu animation error:", error);
+            this._animateWithoutGSAP();
+        }
+    }
+    
+    /**
+     * Fallback animation when GSAP is not available
+     * @private
+     */
+    _animateWithoutGSAP() {
+        this.titleContainer.alpha = 1;
+        this.titleContainer.y = this.game.app.screen.height * 0.25;
+        this.buttonsContainer.alpha = 1;
     }
     
     /**

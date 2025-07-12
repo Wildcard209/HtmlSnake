@@ -6,9 +6,12 @@ class InputHandler {
     constructor() {
         this.keys = {};
         this.pressedThisFrame = {};
+        this.keysHeld = {};
         
         window.addEventListener('keydown', this.handleKeyDown.bind(this));
         window.addEventListener('keyup', this.handleKeyUp.bind(this));
+        
+        console.log("Input handler initialized");
     }
     
     /**
@@ -17,6 +20,8 @@ class InputHandler {
      */
     handleKeyDown(event) {
         this.keys[event.key] = true;
+        this.keysHeld[event.key] = true;
+        console.log("Key down:", event.key);
     }
     
     /**
@@ -25,6 +30,7 @@ class InputHandler {
      */
     handleKeyUp(event) {
         this.keys[event.key] = false;
+        this.keysHeld[event.key] = false;
     }
     
     /**
@@ -36,7 +42,6 @@ class InputHandler {
         for (const key in this.keys) {
             if (this.keys[key]) {
                 this.pressedThisFrame[key] = true;
-                
                 this.keys[key] = false;
             }
         }
@@ -52,6 +57,24 @@ class InputHandler {
     }
     
     /**
+     * Check if a key is currently held down
+     * @param {string} key - The key to check
+     * @returns {boolean} - True if the key is held down
+     */
+    isKeyHeld(key) {
+        return this.keysHeld[key] === true;
+    }
+    
+    /**
+     * Check if any of the keys in a group is held down
+     * @param {Array} keyGroup - Array of keys to check
+     * @returns {boolean} - True if any key in the group is held
+     */
+    isGroupHeld(keyGroup) {
+        return keyGroup.some(key => this.isKeyHeld(key));
+    }
+    
+    /**
      * Check if any of the keys in a group was just pressed
      * @param {Array} keyGroup - Array of keys to check
      * @returns {boolean} - True if any key in the group was just pressed
@@ -62,34 +85,34 @@ class InputHandler {
     
     /**
      * Check if up direction was pressed
-     * @returns {boolean} - True if up was pressed
+     * @returns {boolean} - True if up was pressed or held
      */
     isUpPressed() {
-        return KEY_CODES.UP.some(key => this.wasPressed(key));
+        return KEY_CODES.UP.some(key => this.isKeyHeld(key));
     }
     
     /**
      * Check if down direction was pressed
-     * @returns {boolean} - True if down was pressed
+     * @returns {boolean} - True if down was pressed or held
      */
     isDownPressed() {
-        return KEY_CODES.DOWN.some(key => this.wasPressed(key));
+        return KEY_CODES.DOWN.some(key => this.isKeyHeld(key));
     }
     
     /**
      * Check if left direction was pressed
-     * @returns {boolean} - True if left was pressed
+     * @returns {boolean} - True if left was pressed or held
      */
     isLeftPressed() {
-        return KEY_CODES.LEFT.some(key => this.wasPressed(key));
+        return KEY_CODES.LEFT.some(key => this.isKeyHeld(key));
     }
     
     /**
      * Check if right direction was pressed
-     * @returns {boolean} - True if right was pressed
+     * @returns {boolean} - True if right was pressed or held
      */
     isRightPressed() {
-        return KEY_CODES.RIGHT.some(key => this.wasPressed(key));
+        return KEY_CODES.RIGHT.some(key => this.isKeyHeld(key));
     }
     
     /**

@@ -80,33 +80,59 @@ class GameOverScene extends BaseScene {
      * Called when scene becomes active
      */
     onEnter() {
+        console.log("Game over scene entered");
+        
         this.scoreText.text = `Score: ${this.game.score}`;
+        
+        try {
+            this.game.audio.playSound('gameOver');
+        } catch (error) {
+            console.error("Error playing game over sound:", error);
+        }
 
         this.gameOverContainer.alpha = 0;
         this.gameOverContainer.y = this.game.app.screen.height * 0.1;
         
-        gsap.to(this.gameOverContainer, {
-            alpha: 1,
-            y: this.game.app.screen.height * 0.15,
-            duration: 0.5,
-            ease: "power2.out"
-        });
+        try {
+            if (typeof gsap !== 'undefined') {
+                gsap.to(this.gameOverContainer, {
+                    alpha: 1,
+                    y: this.game.app.screen.height * 0.15,
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+            } else {
+                this._animateWithoutGSAP();
+            }
+        } catch (error) {
+            console.error("Animation error:", error);
+            this._animateWithoutGSAP();
+        }
         
         this.createDeathAnimation();
+    }
+    
+    /**
+     * Fallback animation when GSAP is not available
+     * @private
+     */
+    _animateWithoutGSAP() {
+        this.gameOverContainer.alpha = 1;
+        this.gameOverContainer.y = this.game.app.screen.height * 0.15;
     }
     
     /**
      * Create a visual death animation
      */
     createDeathAnimation() {
-        const particles = new PIXI.Container();
-        this.container.addChild(particles);
+        this.particlesContainer = new PIXI.Container();
+        this.container.addChild(this.particlesContainer);
         
-        particles.x = this.game.app.screen.width / 2;
-        particles.y = this.game.app.screen.height / 2;
+        this.particlesContainer.x = this.game.app.screen.width / 2;
+        this.particlesContainer.y = this.game.app.screen.height / 2;
         
         const particleCount = 20;
-        const particleGraphics = [];
+        this.particles = [];
         
         for (let i = 0; i < particleCount; i++) {
             const particle = new PIXI.Graphics();
@@ -117,28 +143,23 @@ class GameOverScene extends BaseScene {
             particle.x = (Math.random() - 0.5) * 20;
             particle.y = (Math.random() - 0.5) * 20;
             
-            particles.addChild(particle);
-            particleGraphics.push(particle);
-
-            gsap.to(particle, {
-                x: (Math.random() - 0.5) * 200,
-                y: (Math.random() - 0.5) * 200,
-                alpha: 0,
-                duration: 1 + Math.random(),
-                ease: "power2.out"
-            });
+            particle.targetX = (Math.random() - 0.5) * 200;
+            particle.targetY = (Math.random() - 0.5) * 200;
+            particle.speed = 1 + Math.random();
+            particle.progress = 0;
+            
+            this.particlesContainer.addChild(particle);
+            this.particles.push(particle);
         }
         
+        this.animationActive = true;
+        
         setTimeout(() => {
-            this.container.removeChild(particles);
+            if (this.particlesContainer && this.particlesContainer.parent) {
+                this.container.removeChild(this.particlesContainer);
+            }
+            this.animationActive = false;
         }, 2000);
-    }
-    
-    /**
-     * Called when scene becomes inactive
-     */
-    onExit() {
-        // No specific actions needed
     }
     
     /**
@@ -146,6 +167,30 @@ class GameOverScene extends BaseScene {
      * @param {number} delta - Time elapsed since last update
      */
     update(delta) {
-        // No ongoing updates needed
+        if (this.animationActive && this.particles) {
+            for (const particle of this.particles) {
+                particle.progress += (delta / 60) * particle.speed * 0.5;
+                
+                if (particle.progress >= 1) {
+                    particle.alpha = 0;
+                } else {
+                    particle.x = particle.x + (particle.targetX - particle.x) * 0.05;
+                    particle.y = particle.y + (particle.targetY - particle.y) * 0.05;
+                    
+                    particle.alpha = 1 - particle.progress;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Called when scene becomes inactive
+     */
+    onExit() {
+        this.animationActive = false;
+
+        if (this.particlesContainer && this.particlesContainer.parent) {
+            this.container.removeChild(this.particlesContainer);
+        }
     }
 }

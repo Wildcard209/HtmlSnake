@@ -46,7 +46,23 @@ class GameScene extends BaseScene {
      * Set up input handlers
      */
     setupInput() {
-        // These will be handled in the update method
+        this.keyHandler = (e) => {
+            console.log("Game scene key pressed:", e.key);
+            
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                this.snake.setDirection(DIRECTIONS.UP);
+            } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                this.snake.setDirection(DIRECTIONS.DOWN);
+            } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                this.snake.setDirection(DIRECTIONS.LEFT);
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                this.snake.setDirection(DIRECTIONS.RIGHT);
+            }
+            
+            if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+                this.game.pause();
+            }
+        };
     }
     
     /**
@@ -230,20 +246,28 @@ class GameScene extends BaseScene {
      * Called when scene becomes active
      */
     onEnter() {
+        console.log("Game scene entered");
+        
         this.reset();
         
         this.drawGrid();
         
         this.spawnFood();
         
-        this.game.audio.playMusic('game');
+        try {
+            this.game.audio.playMusic('game');
+        } catch (error) {
+            console.error("Error playing game music:", error);
+        }
+        
+        window.addEventListener('keydown', this.keyHandler);
     }
     
     /**
      * Called when scene becomes inactive
      */
     onExit() {
-        // Nothing specific needed here
+        window.removeEventListener('keydown', this.keyHandler);
     }
     
     /**
@@ -255,17 +279,36 @@ class GameScene extends BaseScene {
             return;
         }
         
+        if (this._updateCount === undefined) {
+            this._updateCount = 0;
+        }
+        
+        if (this._updateCount < 10) {
+            console.log("Game scene update:", this._updateCount);
+            console.log("Input states - Up:", this.game.input.isUpPressed(), 
+                        "Down:", this.game.input.isDownPressed(),
+                        "Left:", this.game.input.isLeftPressed(),
+                        "Right:", this.game.input.isRightPressed());
+            this._updateCount++;
+        }
+        
+        // Handle movement input
         if (this.game.input.isUpPressed()) {
+            console.log("UP pressed in game");
             this.snake.setDirection(DIRECTIONS.UP);
         } else if (this.game.input.isDownPressed()) {
+            console.log("DOWN pressed in game");
             this.snake.setDirection(DIRECTIONS.DOWN);
         } else if (this.game.input.isLeftPressed()) {
+            console.log("LEFT pressed in game");
             this.snake.setDirection(DIRECTIONS.LEFT);
         } else if (this.game.input.isRightPressed()) {
+            console.log("RIGHT pressed in game");
             this.snake.setDirection(DIRECTIONS.RIGHT);
         }
         
         if (this.game.input.isPausePressed()) {
+            console.log("PAUSE pressed in game");
             this.game.pause();
             return;
         }
